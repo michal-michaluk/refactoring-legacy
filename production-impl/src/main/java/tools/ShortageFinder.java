@@ -5,6 +5,7 @@ import entities.ProductionEntity;
 import entities.ShortageEntity;
 import enums.DeliverySchema;
 import external.CurrentStock;
+import shortages.ProductionOutputs;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -45,15 +46,7 @@ public class ShortageFinder {
                 .limit(daysAhead)
                 .collect(toList());
 
-        String productRefNo = null;
-        HashMap<LocalDate, List<ProductionEntity>> outputs = new HashMap<>();
-        for (ProductionEntity production : productions) {
-            if (!outputs.containsKey(production.getStart().toLocalDate())) {
-                outputs.put(production.getStart().toLocalDate(), new ArrayList<>());
-            }
-            outputs.get(production.getStart().toLocalDate()).add(production);
-            productRefNo = production.getForm().getRefNo();
-        }
+        ProductionOutputs outputs = new ProductionOutputs(productions);
         HashMap<LocalDate, DemandEntity> demandsPerDay = new HashMap<>();
         for (DemandEntity demand1 : demands) {
             demandsPerDay.put(demand1.getDay(), demand1);
@@ -65,15 +58,10 @@ public class ShortageFinder {
         for (LocalDate day : dates) {
             DemandEntity demand = demandsPerDay.get(day);
             if (demand == null) {
-                for (ProductionEntity production : outputs.get(day)) {
-                    level += production.getOutput();
-                }
+                level += outputs.get(day);
                 continue;
             }
-            long produced = 0;
-            for (ProductionEntity production : outputs.get(day)) {
-                produced += production.getOutput();
-            }
+            long produced = outputs.get(day);
 
             long levelOnDelivery;
             if (Util.getDeliverySchema(demand) == DeliverySchema.atDayStart) {
@@ -90,7 +78,7 @@ public class ShortageFinder {
 
             if (levelOnDelivery < 0) {
                 ShortageEntity entity = new ShortageEntity();
-                entity.setRefNo(productRefNo);
+                entity.setRefNo(outputs.getProductRefNo());
                 entity.setFound(LocalDate.now());
                 entity.setAtDay(day);
                 entity.setMissing(-levelOnDelivery);
