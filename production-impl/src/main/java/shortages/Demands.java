@@ -23,7 +23,10 @@ public class Demands {
     public DailyDemand get(LocalDate day) {
         if (demandsPerDay.containsKey(day)) {
             DemandEntity entity = demandsPerDay.get(day);
-            return new DailyDemand(Util.getDeliverySchema(entity), Util.getLevel(entity));
+            return new DailyDemand(
+                    Util.getLevel(entity),
+                    LevelOnDelivery.pick(Util.getDeliverySchema(entity))
+            );
         }
         return null;
     }
@@ -34,21 +37,20 @@ public class Demands {
 
     public static class DailyDemand {
 
-        private final DeliverySchema deliverySchema;
         private final long level;
+        private final LevelOnDelivery str;
 
-        public DailyDemand(DeliverySchema deliverySchema, long level) {
-
-            this.deliverySchema = deliverySchema;
+        public DailyDemand(long level, LevelOnDelivery str) {
             this.level = level;
-        }
-
-        public DeliverySchema getDeliverySchema() {
-            return deliverySchema;
+            this.str = str;
         }
 
         public long getLevel() {
             return level;
+        }
+
+        public long calculate(long stock, long produced) {
+            return str.calculate(stock, this.level, produced);
         }
     }
 }
