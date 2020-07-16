@@ -7,8 +7,8 @@ import entities.ProductionEntity;
 import entities.ShortageEntity;
 import enums.DeliverySchema;
 import external.CurrentStock;
-import org.junit.Assert;
 import org.junit.Test;
+import shortages.ShortagesAssert;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class ShortageFinderSimpleTest {
         );
 
         // then
-        Assert.assertTrue(shortages.isEmpty());
+        ShortagesAssert.assertThat(shortages).noShortagesFound();
     }
 
     private List<ProductionEntity> withoutProductionsOnPlan() {

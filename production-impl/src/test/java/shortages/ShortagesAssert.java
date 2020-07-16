@@ -23,6 +23,11 @@ public class ShortagesAssert {
         return this;
     }
 
+    public ShortagesAssert noShortagesFound() {
+        foundExactly(0);
+        return this;
+    }
+
     public ShortagesAssert missingPartsAt(LocalDate date, long missing) {
         Optional<ShortageEntity> entry = shortages.stream().filter(e -> e.getAtDay().equals(date)).findFirst();
         Assertions.assertThat(entry).isPresent();
