@@ -7,11 +7,9 @@ import enums.DeliverySchema;
 import external.CurrentStock;
 import shortages.Demands;
 import shortages.ProductionOutputs;
+import shortages.ShortageBuilder;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -52,7 +50,7 @@ public class ShortageFinder {
 
         long level = stock.getLevel();
 
-        List<ShortageEntity> gap = new LinkedList<>();
+        ShortageBuilder gap = ShortageBuilder.builder(outputs.getProductRefNo());
         for (LocalDate day : dates) {
             if (!demandsPerDay.contains(day)) {
                 level += outputs.get(day);
@@ -75,16 +73,11 @@ public class ShortageFinder {
             }
 
             if (levelOnDelivery < 0) {
-                ShortageEntity entity = new ShortageEntity();
-                entity.setRefNo(outputs.getProductRefNo());
-                entity.setFound(LocalDate.now());
-                entity.setAtDay(day);
-                entity.setMissing(-levelOnDelivery);
-                gap.add(entity);
+                gap.add(day, levelOnDelivery);
             }
             long endOfDayLevel = level + produced - demand.getLevel();
             level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
         }
-        return gap;
+        return gap.build();
     }
 }
