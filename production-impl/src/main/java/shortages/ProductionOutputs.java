@@ -3,10 +3,7 @@ package shortages;
 import entities.ProductionEntity;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ProductionOutputs {
 
@@ -28,7 +25,7 @@ public class ProductionOutputs {
 
     public long get(LocalDate day) {
         long level = 0;
-        for (ProductionEntity production : outputs.get(day)) {
+        for (ProductionEntity production : outputs.getOrDefault(day, Collections.emptyList())) {
             level += production.getOutput();
         }
         return level;
