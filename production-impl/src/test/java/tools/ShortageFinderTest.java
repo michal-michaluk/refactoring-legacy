@@ -4,7 +4,6 @@ import acl.ShortageFinderACL;
 import entities.*;
 import enums.DeliverySchema;
 import external.CurrentStock;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.Duration;
@@ -16,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static shortages.ShortagesAssert.assertThat;
 
 public class ShortageFinderTest {
 
@@ -40,12 +40,11 @@ public class ShortageFinderTest {
                 ),
                 demands(demand(2, 17000), demand(3, 17000))
         );
-        print(shortages);
-        Assert.assertEquals(2, shortages.size());
-        Assert.assertEquals(date.plusDays(2), shortages.get(0).getAtDay());
-        Assert.assertEquals(3400, shortages.get(0).getMissing());
-        Assert.assertEquals(date.plusDays(3), shortages.get(1).getAtDay());
-        Assert.assertEquals(7800, shortages.get(1).getMissing());
+
+        assertThat(shortages)
+                .foundExactly(2)
+                .missingPartsAt(date.plusDays(2), 3400)
+                .missingPartsAt(date.plusDays(3), 7800);
     }
 
     private void print(CurrentStock stock) {
