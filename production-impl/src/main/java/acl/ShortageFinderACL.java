@@ -4,9 +4,9 @@ import entities.DemandEntity;
 import entities.ProductionEntity;
 import entities.ShortageEntity;
 import external.CurrentStock;
-import shortages.ShortagePrediction;
 import shortages.ShortagePredictionService;
 import shortages.ShortagerPredictionFactory;
+import tools.ShortageFinder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -37,9 +37,12 @@ public class ShortageFinderACL {
     public static List<ShortageEntity> findShortages(LocalDate today, int daysAhead, CurrentStock stock,
                                                      List<ProductionEntity> productions, List<DemandEntity> demands) {
 
-        ShortagerPredictionFactory factory = new ShortagerPredictionFactory(today, daysAhead, stock, productions, demands);
-        ShortagePredictionService service = new ShortagePredictionService(factory);
-        return service.predictShortagres();
+        if (FeatureToggles.ShortageFinderRefactor.enabled()) {
+            ShortagerPredictionFactory factory = new ShortagerPredictionFactory(today, daysAhead, stock, productions, demands);
+            ShortagePredictionService service = new ShortagePredictionService(factory);
+            return service.predictShortagres();
+        } else {
+            return ShortageFinder.findShortages(today, daysAhead, stock, productions, demands);
+        }
     }
-
 }
