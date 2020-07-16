@@ -4,15 +4,11 @@ import entities.DemandEntity;
 import entities.ProductionEntity;
 import entities.ShortageEntity;
 import external.CurrentStock;
-import shortages.Demands;
-import shortages.ProductionOutputs;
 import shortages.ShortagePrediction;
+import shortages.ShortagerPredictionFactory;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
 
 public class ShortageFinder {
 
@@ -40,15 +36,10 @@ public class ShortageFinder {
     public static List<ShortageEntity> findShortages(LocalDate today, int daysAhead, CurrentStock stock,
                                                      List<ProductionEntity> productions, List<DemandEntity> demands) {
 
-        List<LocalDate> dates = Stream.iterate(today, date -> date.plusDays(1))
-                .limit(daysAhead)
-                .collect(toList());
-
-        ProductionOutputs outputs = new ProductionOutputs(productions);
-        Demands demandsPerDay = new Demands(demands);
-
-        ShortagePrediction shortagePrediction = new ShortagePrediction(stock, dates, outputs, demandsPerDay);
-        return shortagePrediction.predict();
+        ShortagerPredictionFactory factory = new ShortagerPredictionFactory(today, daysAhead, stock, productions, demands);
+        ShortagePrediction shortagePrediction = factory.create();
+        List<ShortageEntity> shortages = shortagePrediction.predict();
+        return shortages;
     }
 
 }
