@@ -5,16 +5,14 @@ import entities.ProductionEntity;
 import entities.ShortageEntity;
 import external.CurrentStock;
 import shortages.Demands;
-import shortages.LevelOnDelivery;
 import shortages.ProductionOutputs;
-import shortages.ShortageBuilder;
+import shortages.ShortagePrediction;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
-import static shortages.LevelOnDelivery.pick;
 
 public class ShortageFinder {
 
@@ -49,24 +47,8 @@ public class ShortageFinder {
         ProductionOutputs outputs = new ProductionOutputs(productions);
         Demands demandsPerDay = new Demands(demands);
 
-        long level = stock.getLevel();
-
-        ShortageBuilder gap = ShortageBuilder.builder(outputs.getProductRefNo());
-        for (LocalDate day : dates) {
-            if (!demandsPerDay.contains(day)) {
-                level += outputs.get(day);
-                continue;
-            }
-            Demands.DailyDemand demand = demandsPerDay.get(day);
-            long produced = outputs.get(day);
-            long levelOnDelivery = demand.calculate(level, produced);
-
-            if (levelOnDelivery < 0) {
-                gap.add(day, levelOnDelivery);
-            }
-            long endOfDayLevel = level + produced - demand.getLevel();
-            level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
-        }
-        return gap.build();
+        ShortagePrediction shortagePrediction = new ShortagePrediction(stock, dates, outputs, demandsPerDay);
+        return shortagePrediction.predict();
     }
+
 }
