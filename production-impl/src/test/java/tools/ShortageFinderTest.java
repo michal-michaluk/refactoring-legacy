@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static shortages.ExampleDemands.demand;
 import static shortages.ShortagesAssert.assertThat;
 
 public class ShortageFinderTest {
@@ -47,6 +48,33 @@ public class ShortageFinderTest {
                 .foundExactly(2)
                 .missingPartsAt(date.plusDays(2), 3400)
                 .missingPartsAt(date.plusDays(3), 7800);
+    }
+
+    @Test
+    public void demandsWitAdjustement() {
+        CurrentStock stock = new CurrentStock(1000, 200);
+        print(stock);
+        List<ShortageEntity> shortages = ShortageFinderACL.findShortages(
+                date.plusDays(1), 7,
+                stock,
+                productions(
+                        prod(0, 1, 7), prod(0, 1, 14),
+                        prod(0, 2, 7), prod(0, 2, 14),
+                        prod(0, 3, 7), prod(0, 3, 14),
+                        prod(0, 4, 7), prod(0, 4, 14),
+                        prod(0, 5, 7), prod(0, 5, 14),
+                        prod(0, 6, 7), prod(0, 6, 14),
+                        prod(0, 7, 7), prod(0, 7, 14)
+                ),
+                ExampleDemands.demandSequence(date.plusDays(2),
+                        demand(17000).tillEndOfDay(),
+                        demand(17000).adjustedTo(20000)
+                )
+        );
+
+        assertThat(shortages)
+                .foundExactly(1)
+                .missingPartsAt(date.plusDays(3), 10800);
     }
 
     private void print(CurrentStock stock) {
