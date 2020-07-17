@@ -30,19 +30,6 @@ public class ShortagePredictionService {
 
     private ShortagerPredictionFactory factory;
 
-    public ShortagePredictionService(ShortageDao shortageDao, ProductionDao productionDao, StockService stockService, DemandDao demandDao, NotificationsService notificationService, JiraService jiraService, Clock clock, int confShortagePredictionDaysAhead, long confIncreaseQATaskPriorityInDays, ShortagerPredictionFactory factory) {
-        this.shortageDao = shortageDao;
-        this.productionDao = productionDao;
-        this.stockService = stockService;
-        this.demandDao = demandDao;
-        this.notificationService = notificationService;
-        this.jiraService = jiraService;
-        this.clock = clock;
-        this.confShortagePredictionDaysAhead = confShortagePredictionDaysAhead;
-        this.confIncreaseQATaskPriorityInDays = confIncreaseQATaskPriorityInDays;
-        this.factory = factory;
-    }
-
     public List<ShortageEntity> predictShortagres() {
         ShortagePrediction shortagePrediction = factory.create();
         return shortagePrediction.predict();

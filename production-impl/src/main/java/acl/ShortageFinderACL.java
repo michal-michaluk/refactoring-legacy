@@ -39,7 +39,7 @@ public class ShortageFinderACL {
 
         if (FeatureToggles.ShortageFinderRefactor.enabled()) {
             ShortagerPredictionFactory factory = new ShortagerPredictionFactory(today, daysAhead, stock, productions, demands);
-            ShortagePredictionService service = new ShortagePredictionService(factory);
+            ShortagePredictionService service = new ShortagePredictionService();
             return service.predictShortagres();
         } else {
             return ShortageFinder.findShortages(today, daysAhead, stock, productions, demands);
