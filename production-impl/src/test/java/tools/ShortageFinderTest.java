@@ -1,14 +1,16 @@
 package tools;
 
 import acl.ShortageFinderACL;
-import entities.*;
-import enums.DeliverySchema;
+import entities.FormEntity;
+import entities.LineEntity;
+import entities.ProductionEntity;
+import entities.ShortageEntity;
 import external.CurrentStock;
 import org.junit.Test;
+import shortages.ExampleDemands;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -38,7 +40,7 @@ public class ShortageFinderTest {
                         prod(0, 6, 7), prod(0, 6, 14),
                         prod(0, 7, 7), prod(0, 7, 14)
                 ),
-                demands(demand(2, 17000), demand(3, 17000))
+                ExampleDemands.demandSequence(date.plusDays(2), 17000, 17000)
         );
 
         assertThat(shortages)
@@ -63,27 +65,6 @@ public class ShortageFinderTest {
         return asList(productions);
     }
 
-    private List<DemandEntity> demands(DemandEntity... demands) {
-        System.out.println("demands: " + Stream.of(demands)
-                .map(prod -> prod.getDay() + " " + prod.getOriginal().getLevel())
-                .collect(Collectors.joining(", ")));
-        return asList(demands);
-    }
-
-    private DemandEntity demand(int plusDays, int level) {
-        DemandEntity entity = new DemandEntity();
-        entity.setId(ids.getAndIncrement());
-        entity.setCallofDate(date.minusDays(2));
-        entity.setProductRefNo("300900");
-        entity.setAtDay(date.plusDays(plusDays));
-        OriginalDemandEntity original = new OriginalDemandEntity();
-        original.setAtDay(date.plusDays(plusDays));
-        original.setLevel(level);
-        original.setDeliverySchema(DeliverySchema.atDayStart);
-        entity.setOriginal(original);
-        entity.setAdjustment(new ArrayList<>());
-        return entity;
-    }
 
     private ProductionEntity prod(long lineId, int plusDays, int hour) {
         ProductionEntity entity = new ProductionEntity();
