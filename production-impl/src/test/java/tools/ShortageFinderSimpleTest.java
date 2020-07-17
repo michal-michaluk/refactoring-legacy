@@ -5,14 +5,13 @@ import entities.ProductionEntity;
 import entities.ShortageEntity;
 import external.CurrentStock;
 import org.junit.Test;
-import shortages.*;
+import shortages.ExampleDemands;
+import shortages.ShortagePrediction;
+import shortages.ShortagesAssert;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
 
 public class ShortageFinderSimpleTest {
 
@@ -31,13 +30,8 @@ public class ShortageFinderSimpleTest {
     }
 
     private List<ShortageEntity> whenShortagePredicted(CurrentStock stock, List<ProductionEntity> productions, List<DemandEntity> demands) {
-        List<LocalDate> dates = Stream.iterate(date.plusDays(1), date -> date.plusDays(1))
-                .limit(7)
-                .collect(toList());
-
-        ProductionOutputs outputs = new ProductionOutputs(productions);
-        Demands demandsPerDay = new Demands(demands);
-        return new ShortagePrediction(stock, dates, outputs, demandsPerDay).predict();
+        ShortagePrediction subject = new SohrtagePredictionAssembler().demands(demands).outputs(productions).stock(stock).build(date);
+        return subject.predict();
     }
 
     private List<ProductionEntity> withoutProductionsOnPlan() {

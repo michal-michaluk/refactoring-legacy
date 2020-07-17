@@ -7,12 +7,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class ShortagePrediction {
-    private CurrentStock stock;
-    private List<LocalDate> dates;
-    private ProductionOutputs outputs;
-    private Demands demandsPerDay;
+    private final String refNo;
+    private final CurrentStock stock;
+    private final List<LocalDate> dates;
+    private final ProductionOutputs outputs;
+    private final Demands demandsPerDay;
 
-    public ShortagePrediction(CurrentStock stock, List<LocalDate> dates, ProductionOutputs outputs, Demands demandsPerDay) {
+    public ShortagePrediction(String refNo, CurrentStock stock, List<LocalDate> dates, ProductionOutputs outputs, Demands demandsPerDay) {
+        this.refNo = refNo;
         this.stock = stock;
         this.dates = dates;
         this.outputs = outputs;
@@ -22,7 +24,7 @@ public class ShortagePrediction {
     public List<ShortageEntity> predict() {
         long level = stock.getLevel();
 
-        ShortageBuilder gap = ShortageBuilder.builder(outputs.getProductRefNo());
+        ShortageBuilder gap = ShortageBuilder.builder(refNo);
         for (LocalDate day : dates) {
             if (!demandsPerDay.contains(day)) {
                 level += outputs.get(day);

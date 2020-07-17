@@ -2,11 +2,16 @@ package shortages;
 
 import dao.DemandDao;
 import dao.ProductionDao;
+import entities.DemandEntity;
+import entities.ProductionEntity;
 import external.CurrentStock;
 import external.StockService;
+import tools.Util;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -23,9 +28,23 @@ public class ShortagesPredictionFactory {
                 .collect(toList());
 
         CurrentStock stock = stockService.getCurrentStock(productRefNo);
-        ProductionOutputs outputs = new ProductionOutputs(productionDao.findFromTime(productRefNo, today.atStartOfDay()));
-        Demands demandsPerDay = new Demands(demandDao.findFrom(today.atStartOfDay(), productRefNo));
+        Map<Object, Long> outputs = productionDao.findFromTime(productRefNo, today.atStartOfDay()).stream()
+                .collect(Collectors.groupingBy(
+                        production -> production.getStart().toLocalDate(),
+                        Collectors.summingLong(ProductionEntity::getOutput)
+                ));
+        Map<LocalDate, Demands.DailyDemand> demands = demandDao.findFrom(today.atStartOfDay(), productRefNo).stream().collect(Collectors.toMap(
+                DemandEntity::getDay,
+                entity -> new Demands.DailyDemand(
+                        Util.getLevel(entity),
+                        LevelOnDelivery.pick(Util.getDeliverySchema(entity))
+                )
+        ));
 
-        return new ShortagePrediction(stock, dates, outputs, demandsPerDay);
+        return new ShortagePrediction(
+                productRefNo, stock, dates,
+                new ProductionOutputs(outputs),
+                new Demands(demands)
+        );
     }
 }
