@@ -1,17 +1,18 @@
 package tools;
 
-import acl.ShortageFinderACL;
 import entities.DemandEntity;
 import entities.ProductionEntity;
 import entities.ShortageEntity;
 import external.CurrentStock;
 import org.junit.Test;
-import shortages.ExampleDemands;
-import shortages.ShortagesAssert;
+import shortages.*;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 public class ShortageFinderSimpleTest {
 
@@ -29,13 +30,14 @@ public class ShortageFinderSimpleTest {
                 .noShortagesFound();
     }
 
-    private List<ShortageEntity> whenShortagePredicted(CurrentStock stock, List<ProductionEntity> noProductions, List<DemandEntity> demands) {
-        return ShortageFinderACL.findShortages(
-                date.plusDays(1), 7,
-                stock,
-                noProductions,
-                demands
-        );
+    private List<ShortageEntity> whenShortagePredicted(CurrentStock stock, List<ProductionEntity> productions, List<DemandEntity> demands) {
+        List<LocalDate> dates = Stream.iterate(date.plusDays(1), date -> date.plusDays(1))
+                .limit(7)
+                .collect(toList());
+
+        ProductionOutputs outputs = new ProductionOutputs(productions);
+        Demands demandsPerDay = new Demands(demands);
+        return new ShortagePrediction(stock, dates, outputs, demandsPerDay).predict();
     }
 
     private List<ProductionEntity> withoutProductionsOnPlan() {

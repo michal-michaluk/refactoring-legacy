@@ -40,4 +40,8 @@ public class ShortagePrediction {
         }
         return gap.build();
     }
+
+    public CurrentStock getStock() {
+        return stock;
+    }
 }
