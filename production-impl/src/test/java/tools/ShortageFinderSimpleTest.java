@@ -19,21 +19,23 @@ public class ShortageFinderSimpleTest {
 
     @Test
     public void calculateWithoutProductionsOnPlan() {
-        // given
-        CurrentStock stock = new CurrentStock(1000, 0);
-        List<ProductionEntity> noProductions = withoutProductionsOnPlan();
-        List<DemandEntity> demands = ExampleDemands.demandSingleton(date.plusDays(2), 1000);
+        var stock = new CurrentStock(1000, 0);
+        var noProductions = withoutProductionsOnPlan();
+        var demands = ExampleDemands.demandSingleton(date.plusDays(2), 1000);
 
-        // when
-        List<ShortageEntity> shortages = ShortageFinderACL.findShortages(
+        List<ShortageEntity> shortages = whenShortagePredicted(stock, noProductions, demands);
+
+        ShortagesAssert.assertThat(shortages)
+                .noShortagesFound();
+    }
+
+    private List<ShortageEntity> whenShortagePredicted(CurrentStock stock, List<ProductionEntity> noProductions, List<DemandEntity> demands) {
+        return ShortageFinderACL.findShortages(
                 date.plusDays(1), 7,
                 stock,
                 noProductions,
                 demands
         );
-
-        // then
-        ShortagesAssert.assertThat(shortages).noShortagesFound();
     }
 
     private List<ProductionEntity> withoutProductionsOnPlan() {
