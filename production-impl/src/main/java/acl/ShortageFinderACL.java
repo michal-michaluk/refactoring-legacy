@@ -37,12 +37,26 @@ public class ShortageFinderACL {
     public static List<ShortageEntity> findShortages(LocalDate today, int daysAhead, CurrentStock stock,
                                                      List<ProductionEntity> productions, List<DemandEntity> demands) {
 
+        List<ShortageEntity> legacy = ShortageFinder.findShortages(today, daysAhead, stock, productions, demands);
         if (FeatureToggles.ShortageFinderRefactor.enabled()) {
-            ShortagerPredictionFactory factory = new ShortagerPredictionFactory(today, daysAhead, stock, productions, demands);
-            ShortagePredictionService service = new ShortagePredictionService();
-            return service.predictShortagres();
-        } else {
-            return ShortageFinder.findShortages(today, daysAhead, stock, productions, demands);
+
+            try {
+                ShortagerPredictionFactory factory = new ShortagerPredictionFactory(today, daysAhead, stock, productions, demands);
+                ShortagePredictionService service = new ShortagePredictionService();
+                List<ShortageEntity> modeled = service.predictShortagres();
+
+                // diff legacy vs modeled
+                // if ok: log success
+                // if nok:
+                // log scenario:
+                // + stock, productions (date + output), demands (data + level + DeliverySchema)
+                // + both outcomes legacy + modeled
+                //   or log diff in outcomes legacy + modeled
+            } catch (Throwable t) {
+                // log exception
+            }
         }
+
+        return legacy;
     }
 }
