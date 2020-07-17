@@ -20,7 +20,7 @@ public class ShortagePredictionService {
     private int confShortagePredictionDaysAhead;
     private long confIncreaseQATaskPriorityInDays;
 
-    private ShortagesPredictionFactory factory;
+    private ShortagesPredictionRepository factory;
 
     public void processShortagesFromWarehouse(String productRefNo) {
         LocalDate today = LocalDate.now(clock);

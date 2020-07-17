@@ -1,4 +1,4 @@
-package shortages;
+package infrastructure;
 
 import dao.DemandDao;
 import dao.ProductionDao;
@@ -6,6 +6,7 @@ import entities.DemandEntity;
 import entities.ProductionEntity;
 import external.CurrentStock;
 import external.StockService;
+import shortages.*;
 import tools.Util;
 
 import java.time.LocalDate;
@@ -16,12 +17,13 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
-public class ShortagesPredictionFactory {
+public class ShortagesPredictionACLRepository implements ShortagesPredictionRepository {
 
     private ProductionDao productionDao;
     private StockService stockService;
     private DemandDao demandDao;
 
+    @Override
     public ShortagePrediction create(String productRefNo, LocalDate today, int daysAhead) {
         List<LocalDate> dates = Stream.iterate(today, date -> date.plusDays(1))
                 .limit(daysAhead)
