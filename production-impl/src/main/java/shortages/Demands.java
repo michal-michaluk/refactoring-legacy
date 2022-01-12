@@ -1,47 +1,46 @@
 package shortages;
 
 import entities.DemandEntity;
-import enums.DeliverySchema;
 import tools.Util;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Demands {
 
-    private final Map<LocalDate, DemandEntity> demandsPerDay;
+    private final Map<LocalDate, DailyDemand> demandsPerDay;
 
     public Demands(List<DemandEntity> demands) {
         this.demandsPerDay = demands.stream()
                 .collect(Collectors.toUnmodifiableMap(
                         DemandEntity::getDay,
-                        Function.identity()
-                ));
+                        entity -> new DailyDemand(
+                                Util.getLevel(entity),
+                                LevelOnDeliveryVariantDecision.pickCalculationVariant(Util.getDeliverySchema(entity))))
+                );
     }
 
     public DailyDemand get(LocalDate day) {
-        return Optional.ofNullable(demandsPerDay.get(day))
-                .map(DailyDemand::new)
-                .orElse(null);
+        return demandsPerDay.get(day);
     }
 
     public static class DailyDemand {
-        private final DemandEntity entity;
+        private final long demand;
+        private final LevelOnDeliveryCalculation strategy;
 
-        public DailyDemand(DemandEntity entity) {
-            this.entity = entity;
-        }
-
-        public DeliverySchema getDeliverySchema() {
-            return Util.getDeliverySchema(entity);
+        public DailyDemand(long level, LevelOnDeliveryCalculation strategy) {
+            demand = level;
+            this.strategy = strategy;
         }
 
         public long getLevel() {
-            return Util.getLevel(entity);
+            return demand;
+        }
+
+        public long calculateLevelOnDelivery(long level, long produced) {
+            return strategy.calculate(level, getLevel(), produced);
         }
     }
 }

@@ -3,7 +3,6 @@ package tools;
 import entities.DemandEntity;
 import entities.ProductionEntity;
 import entities.ShortageEntity;
-import enums.DeliverySchema;
 import external.CurrentStock;
 import shortages.Demands;
 import shortages.ProductionOutputs;
@@ -57,19 +56,7 @@ public class ShortageFinder {
                 continue;
             }
             long produced = outputs.getLevel(day);
-
-            long levelOnDelivery;
-            if (demand.getDeliverySchema() == DeliverySchema.atDayStart) {
-                levelOnDelivery = level - demand.getLevel();
-            } else if (demand.getDeliverySchema() == DeliverySchema.tillEndOfDay) {
-                levelOnDelivery = level - demand.getLevel() + produced;
-            } else if (demand.getDeliverySchema() == DeliverySchema.every3hours) {
-                // TODO WTF ?? we need to rewrite that app :/
-                throw new UnsupportedOperationException();
-            } else {
-                // TODO implement other variants
-                throw new UnsupportedOperationException();
-            }
+            long levelOnDelivery = demand.calculateLevelOnDelivery(level, produced);
 
             if (levelOnDelivery < 0) {
                 shortages.foundForDay(day, levelOnDelivery);
