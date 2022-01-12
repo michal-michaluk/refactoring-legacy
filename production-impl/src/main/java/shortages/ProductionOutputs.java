@@ -1,31 +1,17 @@
 package shortages;
 
-import entities.ProductionEntity;
-
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ProductionOutputs {
-    private final String productRefNo;
-    private final Map<LocalDate, List<ProductionEntity>> outputs;
+    private final Map<LocalDate, Long> outputs;
 
-    public ProductionOutputs(List<ProductionEntity> productions) {
-        this.productRefNo = productions.get(productions.size() - 1).getForm().getRefNo();
-        this.outputs = productions.stream()
-                .collect(Collectors.groupingBy(
-                        production -> production.getStart().toLocalDate()
-                ));
+    public ProductionOutputs(Map<LocalDate, Long> outputs) {
+        this.outputs = outputs;
     }
 
     public long getLevel(LocalDate day) {
-        return outputs.getOrDefault(day, List.of()).stream()
-                .mapToLong(ProductionEntity::getOutput)
-                .sum();
+        return outputs.getOrDefault(day, 0L);
     }
 
-    public String getProductRefNo() {
-        return productRefNo;
-    }
 }

@@ -6,12 +6,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class ShortagePrediction {
+    private final String productRefNo;
     private final CurrentStock stock;
     private final List<LocalDate> dates;
     private final ProductionOutputs outputs;
     private final Demands demandsPerDay;
 
-    public ShortagePrediction(CurrentStock stock, List<LocalDate> dates, ProductionOutputs outputs, Demands demandsPerDay) {
+    public ShortagePrediction(String productRefNo, CurrentStock stock, List<LocalDate> dates, ProductionOutputs outputs, Demands demandsPerDay) {
+        this.productRefNo = productRefNo;
         this.stock = stock;
         this.dates = dates;
         this.outputs = outputs;
@@ -20,7 +22,7 @@ public class ShortagePrediction {
 
     public ShortageBuilder predict() {
         long level = stock.getLevel();
-        ShortageBuilder shortages = ShortageBuilder.builder(outputs.getProductRefNo());
+        ShortageBuilder shortages = ShortageBuilder.builder(productRefNo);
         for (LocalDate day : dates) {
             Demands.DailyDemand demand = demandsPerDay.get(day);
             if (demand == null) {
