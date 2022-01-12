@@ -8,22 +8,21 @@ import dao.ProductionDao;
 import dao.ShortageDao;
 import entities.DemandEntity;
 import entities.ManualAdjustmentEntity;
-import entities.ShortageEntity;
-import external.CurrentStock;
 import external.JiraService;
 import external.NotificationsService;
 import external.StockService;
-import tools.ShortageFinderACL;
+import shortages.ShortagePredictionService;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.LinkedList;
-import java.util.List;
 
 public class LogisticServiceImpl implements LogisticService {
 
     //Inject all
     private DemandDao demandDao;
+    private ShortagePredictionService shortage;
+
     private ShortageDao shortageDao;
     private StockService stockService;
     private ProductionDao productionDao;
@@ -72,30 +71,7 @@ public class LogisticServiceImpl implements LogisticService {
         demand.getAdjustment().add(manualAdjustment);
         // TODO REFACTOR: introduce domain event DemandManuallyAdjusted
 
-        String productRefNo = adjustment.getProductRefNo();
-        LocalDate today = LocalDate.now(clock);
-        CurrentStock stock = stockService.getCurrentStock(productRefNo);
-        List<ShortageEntity> shortages = ShortageFinderACL.findShortages(
-                today, confShortagePredictionDaysAhead,
-                stock,
-                productionDao.findFromTime(productRefNo, today.atStartOfDay()),
-                demandDao.findFrom(today.atStartOfDay(), productRefNo)
-        );
-        List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
-        // TODO REFACTOR: lookup for shortages -> ShortageFound / ShortagesGone
-        if (!shortages.isEmpty() && !shortages.equals(previous)) {
-            notificationService.alertPlanner(shortages);
-            // TODO REFACTOR: policy why to increase task priority
-            if (stock.getLocked() > 0 &&
-                    shortages.get(0).getAtDay()
-                            .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
-                jiraService.increasePriorityFor(productRefNo);
-            }
-            shortageDao.save(shortages);
-        }
-        if (shortages.isEmpty() && !previous.isEmpty()) {
-            shortageDao.delete(productRefNo);
-        }
+        shortage.processShortagesAfterDemandChanged(adjustment);
     }
 
     /**

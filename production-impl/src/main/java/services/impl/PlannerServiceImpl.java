@@ -2,21 +2,16 @@ package services.impl;
 
 import api.PlanViewDto;
 import api.PlannerService;
-import dao.*;
+import dao.FormDao;
+import dao.LineDao;
+import dao.ProductionDao;
 import entities.FormEntity;
 import entities.LineEntity;
 import entities.ProductionEntity;
-import entities.ShortageEntity;
-import external.CurrentStock;
-import external.JiraService;
-import external.NotificationsService;
-import external.StockService;
-import tools.ShortageFinderACL;
+import shortages.ShortagePredictionService;
 import tools.Util;
 
-import java.time.Clock;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,16 +22,8 @@ public class PlannerServiceImpl implements PlannerService {
     private ProductionDao productionDao;
     private LineDao lineDao;
     private FormDao formDao;
-    private ShortageDao shortageDao;
-    private StockService stockService;
-    private DemandDao demandDao;
 
-    private NotificationsService notificationService;
-    private JiraService jiraService;
-    private Clock clock;
-
-    private int confShortagePredictionDaysAhead;
-    private long confIncreaseQATaskPriorityInDays;
+    private ShortagePredictionService shortage;
 
     /**
      * <pre>
@@ -111,7 +98,7 @@ public class PlannerServiceImpl implements PlannerService {
         productionDao.save(newScheduled);
 
         // Shortages may arise if insufficient production was planned.
-        processShortages(changed);
+        shortage.processShortagesAfterProductionPlanChangeed(changed);
     }
 
     /**
@@ -146,7 +133,7 @@ public class PlannerServiceImpl implements PlannerService {
         production.setDuration(duration);
 
         // Shortages may arise if insufficient production was planned.
-        processShortages(changed);
+        shortage.processShortagesAfterProductionPlanChangeed(changed);
     }
 
     //Transactional
@@ -234,30 +221,4 @@ public class PlannerServiceImpl implements PlannerService {
                 ;
     }
 
-    private void processShortages(List<ProductionEntity> products) {
-        LocalDate today = LocalDate.now(clock);
-
-        for (ProductionEntity production : products) {
-            CurrentStock currentStock = stockService.getCurrentStock(production.getForm().getRefNo());
-            List<ShortageEntity> shortages = ShortageFinderACL.findShortages(
-                    today, confShortagePredictionDaysAhead,
-                    currentStock,
-                    productionDao.findFromTime(production.getForm().getRefNo(), today.atStartOfDay()),
-                    demandDao.findFrom(today.atStartOfDay(), production.getForm().getRefNo())
-            );
-            List<ShortageEntity> previous = shortageDao.getForProduct(production.getForm().getRefNo());
-            if (!shortages.isEmpty() && !shortages.equals(previous)) {
-                notificationService.markOnPlan(shortages);
-                if (currentStock.getLocked() > 0 &&
-                        shortages.get(0).getAtDay()
-                                .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
-                    jiraService.increasePriorityFor(production.getForm().getRefNo());
-                }
-                shortageDao.save(shortages);
-            }
-            if (shortages.isEmpty() && !previous.isEmpty()) {
-                shortageDao.delete(production.getForm().getRefNo());
-            }
-        }
-    }
 }

@@ -3,34 +3,12 @@ package services.impl;
 import api.DeliveryNote;
 import api.StorageUnit;
 import api.WarehouseService;
-import dao.DemandDao;
-import dao.ProductionDao;
-import dao.ShortageDao;
-import entities.ShortageEntity;
-import external.CurrentStock;
-import external.JiraService;
-import external.NotificationsService;
-import external.StockService;
-import tools.ShortageFinderACL;
-
-import java.time.Clock;
-import java.time.LocalDate;
-import java.util.List;
+import shortages.ShortagePredictionService;
 
 public class WarehouseServiceImpl implements WarehouseService {
 
     //Inject all
-    private ShortageDao shortageDao;
-    private ProductionDao productionDao;
-    private StockService stockService;
-    private DemandDao demandDao;
-
-    private NotificationsService notificationService;
-    private JiraService jiraService;
-    private Clock clock;
-
-    private int confShortagePredictionDaysAhead;
-    private long confIncreaseQATaskPriorityInDays;
+    private ShortagePredictionService shortage;
 
     /**
      * <pre>
@@ -43,7 +21,7 @@ public class WarehouseServiceImpl implements WarehouseService {
     //Transactional
     @Override
     public void registerNew(StorageUnit unit) {
-        processShortages(unit.getProductRefNo());
+        shortage.processShortagesAfterStockChanged(unit.getProductRefNo());
     }
 
     /**
@@ -59,31 +37,8 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Override
     public void deliver(DeliveryNote note) {
         for (String productRefNo : note.getProducts()) {
-            processShortages(productRefNo);
+            shortage.processShortagesAfterStockChanged(productRefNo);
         }
     }
 
-    public void processShortages(String productRefNo) {
-        LocalDate today = LocalDate.now(clock);
-        CurrentStock currentStock = stockService.getCurrentStock(productRefNo);
-        List<ShortageEntity> shortages = ShortageFinderACL.findShortages(
-                today, confShortagePredictionDaysAhead,
-                currentStock,
-                productionDao.findFromTime(productRefNo, today.atStartOfDay()),
-                demandDao.findFrom(today.atStartOfDay(), productRefNo)
-        );
-
-        List<ShortageEntity> previous = shortageDao.getForProduct(productRefNo);
-        if (shortages != null && !shortages.equals(previous)) {
-            notificationService.alertPlanner(shortages);
-            if (currentStock.getLocked() > 0 &&
-                    shortages.get(0).getAtDay()
-                            .isBefore(today.plusDays(confIncreaseQATaskPriorityInDays))) {
-                jiraService.increasePriorityFor(productRefNo);
-            }
-        }
-        if (shortages.isEmpty() && !previous.isEmpty()) {
-            shortageDao.delete(productRefNo);
-        }
-    }
 }
