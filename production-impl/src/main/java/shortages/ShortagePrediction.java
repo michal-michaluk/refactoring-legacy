@@ -38,4 +38,8 @@ public class ShortagePrediction {
         }
         return shortages;
     }
+
+    public long getLocked() {
+        return stock.getLocked();
+    }
 }

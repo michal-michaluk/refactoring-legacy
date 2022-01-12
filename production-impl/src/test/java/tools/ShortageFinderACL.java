@@ -4,9 +4,7 @@ import entities.DemandEntity;
 import entities.ProductionEntity;
 import entities.ShortageEntity;
 import external.CurrentStock;
-import shortages.ShortageBuilder;
 import shortages.ShortagePrediction;
-import shortages.ShortagePredictionFactory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,17 +39,10 @@ public class ShortageFinderACL {
      */
     public static List<ShortageEntity> findShortages(LocalDate today, int daysAhead, CurrentStock stock,
                                                      List<ProductionEntity> productions, List<DemandEntity> demands) {
-
-        List<ShortageEntity> oldCalculation = ShortageFinder.findShortages(today, daysAhead, stock, productions, demands);
-        if (calculateWithNewVersion) {
-            ShortagePredictionFactory factory = new ShortagePredictionFactory(stock, productions, demands);
-            ShortagePrediction prediction = factory.create(today, daysAhead);
-            ShortageBuilder shortages = prediction.predict();
-            List<ShortageEntity> newCalcualtion = shortages.build();
-
-            log(prediction, oldCalculation, diff(oldCalculation, newCalcualtion));
-        }
-        return oldCalculation;
+//            ShortagePredictionFactory factory = new ShortagePredictionFactory(stock, productions, demands);
+//            ShortagePrediction prediction = factory.create(productRefNo, today, daysAhead);
+//        return prediction.predict().build();
+        return null;
     }
 
     private static void log(ShortagePrediction prediction, List<ShortageEntity> oldCalculation, Map<LocalDate, Long> diff) {
