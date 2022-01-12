@@ -10,10 +10,13 @@ import shortages.ShortagePredictionFactory;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class ShortageFinderACL {
 
-    private static boolean calculateWithOldVersion = true;
+    private static boolean calculateWithNewVersion = true;
 
     private ShortageFinderACL() {
     }
@@ -39,13 +42,44 @@ public class ShortageFinderACL {
     public static List<ShortageEntity> findShortages(LocalDate today, int daysAhead, CurrentStock stock,
                                                      List<ProductionEntity> productions, List<DemandEntity> demands) {
 
-        if (calculateWithOldVersion) {
-            return ShortageFinder.findShortages(today, daysAhead, stock, productions, demands);
-        } else {
+        List<ShortageEntity> oldCalculation = ShortageFinder.findShortages(today, daysAhead, stock, productions, demands);
+        if (calculateWithNewVersion) {
             ShortagePredictionFactory factory = new ShortagePredictionFactory(stock, productions, demands);
             ShortagePrediction prediction = factory.create(today, daysAhead);
             ShortageBuilder shortages = prediction.predict();
-            return shortages.build();
+            List<ShortageEntity> newCalcualtion = shortages.build();
+
+            log(prediction, oldCalculation, diff(oldCalculation, newCalcualtion));
+        }
+        return oldCalculation;
+    }
+
+    private static void log(ShortagePrediction prediction, List<ShortageEntity> oldCalculation, Map<LocalDate, Long> diff) {
+        // log as json prediction and any way oldCalculation, diff
+        System.out.println((diff.isEmpty() ? "OK" : "NOK") + ", " + json(prediction) + ", " + oldCalculation + ", " + diff);
+    }
+
+    private static String json(ShortagePrediction prediction) {
+        return "null";
+    }
+
+    private static Map<LocalDate, Long> diff(List<ShortageEntity> oldCalculation, List<ShortageEntity> newCalcualtion) {
+        Map<LocalDate, Long> oldMap = oldCalculation.stream().collect(Collectors.toMap(
+                ShortageEntity::getAtDay, ShortageEntity::getMissing
+        ));
+        Map<LocalDate, Long> newMap = newCalcualtion.stream().collect(Collectors.toMap(
+                ShortageEntity::getAtDay, ShortageEntity::getMissing
+        ));
+        if (!oldMap.equals(newMap)) {
+            return oldMap.entrySet().stream().map(e -> Map.entry(
+                            e.getKey(),
+                            e.getValue() - newMap.get(e.getKey())
+                    )).filter(e -> Objects.equals(e.getValue(), 0L))
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey, Map.Entry::getValue
+                    ));
+        } else {
+            return Map.of();
         }
     }
 
