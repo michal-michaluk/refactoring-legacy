@@ -49,7 +49,7 @@ public class ShortageFinder {
         Demands demandsPerDay = new Demands(demands);
         long level = stock.getLevel();
 
-        ShortageBuilder builder = ShortageBuilder.builder(outputs.getProductRefNo());
+        ShortageBuilder shortages = ShortageBuilder.builder(outputs.getProductRefNo());
         for (LocalDate day : dates) {
             Demands.DailyDemand demand = demandsPerDay.get(day);
             if (demand == null) {
@@ -72,11 +72,11 @@ public class ShortageFinder {
             }
 
             if (levelOnDelivery < 0) {
-                builder.add(day, levelOnDelivery);
+                shortages.foundForDay(day, levelOnDelivery);
             }
             long endOfDayLevel = level + produced - demand.getLevel();
             level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
         }
-        return builder.build();
+        return shortages.build();
     }
 }

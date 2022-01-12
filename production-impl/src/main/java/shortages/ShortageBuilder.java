@@ -20,7 +20,7 @@ public class ShortageBuilder {
         return new ShortageBuilder(productRefNo);
     }
 
-    public void add(LocalDate day, long levelOnDelivery) {
+    public void foundForDay(LocalDate day, long levelOnDelivery) {
         ShortageEntity entity = new ShortageEntity();
         entity.setRefNo(productRefNo);
         entity.setFound(LocalDate.now());
