@@ -4,15 +4,12 @@ import entities.DemandEntity;
 import entities.ProductionEntity;
 import entities.ShortageEntity;
 import external.CurrentStock;
-import shortages.Demands;
-import shortages.ProductionOutputs;
 import shortages.ShortageBuilder;
+import shortages.ShortagePrediction;
+import shortages.ShortagePredictionFactory;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
 
 public class ShortageFinder {
 
@@ -40,30 +37,13 @@ public class ShortageFinder {
     public static List<ShortageEntity> findShortages(LocalDate today, int daysAhead, CurrentStock stock,
                                                      List<ProductionEntity> productions, List<DemandEntity> demands) {
 
-        List<LocalDate> dates = Stream.iterate(today, date -> date.plusDays(1))
-                .limit(daysAhead)
-                .collect(toList());
+        ShortagePredictionFactory factory = new ShortagePredictionFactory(stock, productions, demands);
 
-        ProductionOutputs outputs = new ProductionOutputs(productions);
-        Demands demandsPerDay = new Demands(demands);
-        long level = stock.getLevel();
+        ShortagePrediction prediction = factory.create(today, daysAhead);
 
-        ShortageBuilder shortages = ShortageBuilder.builder(outputs.getProductRefNo());
-        for (LocalDate day : dates) {
-            Demands.DailyDemand demand = demandsPerDay.get(day);
-            if (demand == null) {
-                level += outputs.getLevel(day);
-                continue;
-            }
-            long produced = outputs.getLevel(day);
-            long levelOnDelivery = demand.calculateLevelOnDelivery(level, produced);
+        ShortageBuilder shortages = prediction.predict();
 
-            if (levelOnDelivery < 0) {
-                shortages.foundForDay(day, levelOnDelivery);
-            }
-            long endOfDayLevel = level + produced - demand.getLevel();
-            level = endOfDayLevel >= 0 ? endOfDayLevel : 0;
-        }
         return shortages.build();
     }
+
 }
