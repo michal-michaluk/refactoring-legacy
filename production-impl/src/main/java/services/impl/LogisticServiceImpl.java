@@ -13,7 +13,7 @@ import external.CurrentStock;
 import external.JiraService;
 import external.NotificationsService;
 import external.StockService;
-import tools.ShortageFinder;
+import tools.ShortageFinderACL;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -75,7 +75,7 @@ public class LogisticServiceImpl implements LogisticService {
         String productRefNo = adjustment.getProductRefNo();
         LocalDate today = LocalDate.now(clock);
         CurrentStock stock = stockService.getCurrentStock(productRefNo);
-        List<ShortageEntity> shortages = ShortageFinder.findShortages(
+        List<ShortageEntity> shortages = ShortageFinderACL.findShortages(
                 today, confShortagePredictionDaysAhead,
                 stock,
                 productionDao.findFromTime(productRefNo, today.atStartOfDay()),

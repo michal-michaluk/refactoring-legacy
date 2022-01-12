@@ -3,9 +3,11 @@ package shortages;
 import entities.DemandEntity;
 import entities.ProductionEntity;
 import external.CurrentStock;
+import tools.Util;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -27,7 +29,13 @@ public class ShortagePredictionFactory {
                 .collect(toList());
 
         ProductionOutputs outputs = new ProductionOutputs(productions);
-        Demands demandsPerDay = new Demands(demands);
+        Demands demandsPerDay = new Demands(demands.stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        DemandEntity::getDay,
+                        entity -> new Demands.DailyDemand(
+                                Util.getLevel(entity),
+                                LevelOnDeliveryVariantDecision.pickCalculationVariant(Util.getDeliverySchema(entity))))
+                ));
         return new ShortagePrediction(stock, dates, outputs, demandsPerDay);
     }
 }

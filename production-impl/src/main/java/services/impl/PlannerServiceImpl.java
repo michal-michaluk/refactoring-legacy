@@ -11,7 +11,7 @@ import external.CurrentStock;
 import external.JiraService;
 import external.NotificationsService;
 import external.StockService;
-import tools.ShortageFinder;
+import tools.ShortageFinderACL;
 import tools.Util;
 
 import java.time.Clock;
@@ -239,7 +239,7 @@ public class PlannerServiceImpl implements PlannerService {
 
         for (ProductionEntity production : products) {
             CurrentStock currentStock = stockService.getCurrentStock(production.getForm().getRefNo());
-            List<ShortageEntity> shortages = ShortageFinder.findShortages(
+            List<ShortageEntity> shortages = ShortageFinderACL.findShortages(
                     today, confShortagePredictionDaysAhead,
                     currentStock,
                     productionDao.findFromTime(production.getForm().getRefNo(), today.atStartOfDay()),
