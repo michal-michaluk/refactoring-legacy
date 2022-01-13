@@ -12,7 +12,7 @@ public class ShortagePrediction {
     private final ProductionOutputs outputs;
     private final Demands demandsPerDay;
 
-    public ShortagePrediction(String productRefNo, CurrentStock stock, List<LocalDate> dates, ProductionOutputs outputs, Demands demandsPerDay) {
+    public ShortagePrediction(String productRefNo, List<LocalDate> dates, CurrentStock stock, ProductionOutputs outputs, Demands demandsPerDay) {
         this.productRefNo = productRefNo;
         this.stock = stock;
         this.dates = dates;
